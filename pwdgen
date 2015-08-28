@@ -24,6 +24,7 @@
 import os
 import sys
 import time
+import math
 import string
 import argparse
 import textwrap
@@ -33,6 +34,79 @@ import subprocess
 # Set of characters available for use in passwords.
 CHARS = string.ascii_uppercase + string.ascii_lowercase + \
         string.digits + string.punctuation
+
+
+def permutations(N, L):
+    """Calculate the number of password permutations.
+
+    Args:
+        N (int): number of symbols (character choices).
+        L (int): length of password.
+
+    Returns:
+        int: number of password permutations.
+
+    """
+
+    return N**L
+
+
+def information_entropy(N):
+    """Calculate the information entropy per symbol for a truly random password.
+
+    Args:
+        N (int): number of symbols (character choices).
+
+    Returns:
+        float: information entropy per symbol in bits.
+
+    """
+
+    return math.log(N) / math.log(2)
+
+
+def summary(N, L):
+    """Summarise information for a truly random password.
+
+    Produce a summary of a password in the form:
+
+        Number of symbols:  <int>
+        Password length:    <int>
+        Permutations:       <int>
+        Entropy per symbol: <float> bits
+        Total entropy:      <float> bits
+
+    Args:
+        N (int): number of symbols (character choices).
+        L (int): length of password.
+
+    Returns:
+        string: summary of password information.
+
+    """
+
+    # Calculate information entropy.
+    H = information_entropy(N)
+    eps = '%1.3f bits' % H
+    te = '%1.3f bits' % (H * L)
+    length = max(len(eps), len(te))
+
+    # Use integer notation if 'small', use exponential notation if 'large'
+    P = permutations(N, L)
+    if P < 1000000:
+        per = '{0:,g}'.format(P)
+    else:
+        P
+        per = '10^%i' % math.log10(P)
+
+    # Create summary string.
+    S  = 'Number of symbols:  %i\n' % N
+    S += 'Password length:    %i\n' % L
+    S += 'Permutations:       %s\n' % per
+    S += 'Entropy per symbol: %s\n' % eps.rjust(length, ' ')
+    S += 'Total entropy:      %s\n' % te.rjust(length, ' ')
+
+    return S
 
 
 def check_entropy():
@@ -228,7 +302,11 @@ if __name__ == '__main__':
           generation; this gives the random number generator a better chance to
           gain enough entropy."""
 
-    print '\n' + textwrap.fill(msg, width=70) + '\n'
+    N = len(characters)
+    L = args.length
+    print summary(N, L)
 
-    password = generate_password(args.length)
+    print textwrap.fill(msg, width=70) + '\n'
+
+    password = generate_password(L, characters=characters)
     print '\n' + password

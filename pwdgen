@@ -160,6 +160,14 @@ if __name__ == '__main__':
     parser.add_argument('--punctuation', action='store_true', default=False,
                         help=msg)
 
+    msg = "Specify which characters will be used for random password "
+    msg += "generation (--upper, --lower, --numeric and --punctuation)."
+    parser.add_argument('--include', metavar='<string>', default=None, help=msg)
+
+    msg = "Specify which characters will be excluded from random password "
+    msg += "generation."
+    parser.add_argument('--exclude', metavar='<string>', default=None, help=msg)
+
     msg = "Print characters available for random password generation and exit."
     parser.add_argument('--list', action='store_true', default=False, help=msg)
 
@@ -169,28 +177,42 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     #                  Create list of available characters
     # -------------------------------------------------------------------------
-    characters = ''
 
-    # Include uppercase letters.
-    if args.upper:
-        characters += string.ascii_uppercase
+    # Use default characters.
+    if args.include is None:
+        characters = ''
 
-    # Include lowercase letters.
-    if args.lower:
-        characters += string.ascii_lowercase
+        # Exclude uppercase letters.
+        if args.upper:
+            characters += string.ascii_uppercase
 
-    # Include numeric characters.
-    if args.numeric:
-        characters += string.digits
+        # Exclude lowercase letters.
+        if args.lower:
+            characters += string.ascii_lowercase
 
-    # Include punctuation characters.
-    if args.punctuation:
-        characters += string.punctuation
+        # Exclude numeric characters.
+        if args.numeric:
+            characters += string.digits
+
+        # Include punctuation characters.
+        if args.punctuation:
+            characters += string.punctuation
+
+    # Use input characters.
+    else:
+        characters = ''.join(set(args.include))
+
+    # Exclude user specified characters.
+    if args.exclude is not None:
+        characters = ''.join(set(characters) - set(args.exclude))
 
     # No characters are available. Exit.
     if not characters:
         print "Character set is empty. Cannot generate random passwords."
         sys.exit()
+
+    # Ensure characters is a unique and sorted string.
+    characters = ''.join(sorted(set(characters)))
 
     # Print available characters and exit.
     if args.list:

@@ -231,26 +231,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=formatter_class,
                                      description=textwrap.dedent(man))
 
-    parser.add_argument('--length', metavar='<int>', type=int,
-                        default=DEFAULT_LENGTH, help='length of password
-                        (default=%i)' % DEFAULT_LENGTH)
+    parser.add_argument('-L', '--length', metavar='<int>', type=int,
+                        default=DEFAULT_LENGTH,
+                        help='length of password (default=%i)' % DEFAULT_LENGTH)
 
     msg = "Exclude uppercase letters:  %s" % string.ascii_uppercase
-    parser.add_argument('--upper', action='store_false', default=True,
+    parser.add_argument('-u', '--upper', action='store_false', default=True,
                         help=msg)
 
     msg = "Exclude lowercase letters:  %s" % string.ascii_lowercase
-    parser.add_argument('--lower', action='store_false', default=True,
+    parser.add_argument('-l', '--lower', action='store_false', default=True,
                         help=msg)
 
     msg = "Exclude numeric characters: %s" % string.digits
-    parser.add_argument('--numeric', action='store_false', default=True,
+    parser.add_argument('-n', '--numeric', action='store_false', default=True,
                         help=msg)
 
     msg = "Include punctuation characters: %s" % string.punctuation
     msg = msg.replace('%', '%%')
-    parser.add_argument('--punctuation', action='store_true', default=False,
-                        help=msg)
+    parser.add_argument('-p', '--punctuation', action='store_true',
+                        default=False, help=msg)
 
     msg = "Specify which characters will be used for random password "
     msg += "generation (--upper, --lower, --numeric and --punctuation)."
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     msg = "Print characters available for random password generation and exit."
     parser.add_argument('--list', action='store_true', default=False, help=msg)
 
-    parser.add_argument('--silent', action='store_true', default=False,
+    parser.add_argument('-q', '--quiet', action='store_true', default=False,
                         help="Surpress output to stdout.")
 
     # Get arguments from the command-line.
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     N = len(characters)
     L = args.length
 
-    if not args.silent:
+    if not args.quiet:
         print summary(N, L)
 
         msg = """Collecting environmental noise collected from device drivers and other
@@ -331,9 +331,9 @@ if __name__ == '__main__':
         print textwrap.fill(msg, width=70) + '\n'
 
     password = generate_password(L, characters=characters,
-                                 verbose=not args.silent)
+                                 verbose=not args.quiet)
 
-    if not args.silent:
+    if not args.quiet:
         print
 
     print password

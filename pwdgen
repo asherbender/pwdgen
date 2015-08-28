@@ -33,6 +33,9 @@ import subprocess
 # Default password length.
 DEFAULT_LENGTH = 24
 
+# Default minimum entropy value before sampling.
+DEFAULT_MIN_ENTROPY = 128
+
 # Set of characters available for use in passwords.
 CHARS = string.ascii_uppercase + string.ascii_lowercase + \
         string.digits + string.punctuation
@@ -265,8 +268,13 @@ if __name__ == '__main__':
     msg = "Print characters available for random password generation and exit."
     parser.add_argument('--list', action='store_true', default=False, help=msg)
 
+    msg = 'Minimum level in entropy pool before sampling occurs (default=%i).'
+    parser.add_argument('-m', '--min', metavar='<int>', type=int,
+                        default=DEFAULT_MIN_ENTROPY,
+                        help=msg % DEFAULT_MIN_ENTROPY)
+
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
-                        help="Surpress output to stdout.")
+                        help="Suppress output to stdout.")
 
     # Get arguments from the command-line.
     args = parser.parse_args()
@@ -333,6 +341,7 @@ if __name__ == '__main__':
         print textwrap.fill(msg, width=70) + '\n'
 
     password = generate_password(L, characters=characters,
+                                 pool_reserve=args.min,
                                  verbose=not args.quiet)
 
     if not args.quiet:

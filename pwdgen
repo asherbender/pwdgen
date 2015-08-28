@@ -1,0 +1,160 @@
+#!/usr/bin/python
+"""Generate random passwords
+
+.. sectionauthor:: Asher Bender <a.bender.dev@gmail.com>
+.. codeauthor:: Asher Bender <a.bender.dev@gmail.com>
+
+"""
+
+#    Copyright (C) 2015, Asher Bender
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+import time
+import argparse
+import textwrap
+import subprocess
+
+
+# Set of characters available for use in passwords.
+CHARS = [unichr(i) for i in range(33, 127)]
+
+
+def check_entropy():
+    """Return the amount of entropy available to the system.
+
+    Read the amount of entropy available to the system from
+
+        /proc/sys/kernel/random/entropy_avail
+
+    The read-only file entropy_avail gives the available entropy. Normally,
+    this will be 4096 (bits), a full entropy pool.
+
+    Returns:
+        int: entropy available to the system in bits.
+
+    """
+
+    cmd = ['cat', '/proc/sys/kernel/random/entropy_avail']
+    entropy = subprocess.check_output(cmd)
+    return int(entropy)
+
+
+def byte_to_char(byte, chars):
+    """Convert a byte to a character.
+
+    Args:
+        byte (uint8): byte.
+        characters (list): the list of characters ``byte`` can be mapped onto.
+
+    Returns:
+        str: character
+
+    """
+
+    # Convert byte to a location in the input character list.
+    index = int(len(chars) * (float(byte) / 255.))
+
+    if index < 0 or index >= len(chars):
+        print minimum, index, maximum
+        assert False
+
+    return chars[index]
+
+
+def generate_password(length, pool_reserve=128, characters=CHARS):
+    """Generate a random password by drawing bytes from /dev/random.
+
+    Args:
+        length (int): Length of the random password in characters.
+        pool_reserve (int, **optional**): Only sample a byte from /dev/random
+            when the entropy available to the system is higher than
+            ``pool_reserve``.
+        characters (list, **optional**): list of characters available for
+            generating elements of password.
+
+    Returns:
+        str: a randomly generated password.
+
+    """
+
+    # Define stdout message format.
+    msg = 'Entropy available: %04d bits,  Characters sampled: %i\r'
+
+    j = 0
+    password = list()
+    start_time = time.time()
+    with open("/dev/random", 'rb') as f:
+
+        # Read one byte from /dev/random. This will deplete entropy available
+        # to the system and force the algorithm to wait for the pool reserve to
+        # grow.
+        f.read(1)
+
+        # Sample bytes from /dev/random.
+        while j < length:
+            entropy = check_entropy()
+
+            # If there is enough entropy in the pool, draw a random byte from
+            # /dev/random.
+            if entropy > pool_reserve:
+                password.append(byte_to_char(ord(f.read(1)), characters))
+                j += 1
+
+            # Sleep for a short period.
+            end_time = time.time()
+            if end_time - start_time > 1:
+                start_time = end_time
+                sys.stdout.write(msg % (entropy, j))
+                sys.stdout.flush()
+            else:
+                time.sleep(0.25)
+
+    sys.stdout.write((msg % (entropy, j))[:-1] + '\n')
+    return str(''.join(password))
+
+
+if __name__ == '__main__':
+
+    # -------------------------------------------------------------------------
+    #         Configure command-line options & parsing behaviour
+    # -------------------------------------------------------------------------
+
+    man = """Generate random passwords."""
+    formatter_class = argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(formatter_class=formatter_class,
+                                     description=textwrap.dedent(man))
+
+    parser.add_argument('--length', metavar='<int>', type=int,
+                        help='length of password')
+
+    # Get arguments from the command-line.
+    args = parser.parse_args()
+
+    # -------------------------------------------------------------------------
+    #                       Generate random password
+    # -------------------------------------------------------------------------
+
+    msg = """Collecting environmental noise collected from device drivers and other
+          sources. It is a good idea to perform some other action (type on the
+          keyboard, move the mouse, utilize the disks) during the prime
+          generation; this gives the random number generator a better chance to
+          gain enough entropy."""
+
+    print '\n' + textwrap.fill(msg, width=70) + '\n'
+
+    password = generate_password(args.length)
+    print '\n' + password

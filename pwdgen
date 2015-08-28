@@ -218,9 +218,11 @@ def generate_password(length, pool_reserve=128, characters=CHARS, verbose=True):
 
 if __name__ == '__main__':
 
-    # Can only operate on systems with /dev/random.
-    if not os.path.exists('/dev/random'):
-        raise IOError("Could not locate '/dev/random'. Cannot run pwdgen.")
+    # Can only operate on systems with required resources.
+    for resource in ['/dev/random', '/proc/sys/kernel/random/entropy_avail']:
+        if not os.path.exists(resource):
+            msg = "Could not locate '%s'. Cannot run pwdgen." % resource
+            raise IOError(msg)
 
     # -------------------------------------------------------------------------
     #         Configure command-line options & parsing behaviour

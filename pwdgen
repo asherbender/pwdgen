@@ -24,13 +24,15 @@
 import os
 import sys
 import time
+import string
 import argparse
 import textwrap
 import subprocess
 
 
 # Set of characters available for use in passwords.
-CHARS = [unichr(i) for i in range(33, 127)]
+CHARS = string.ascii_uppercase + string.ascii_lowercase + \
+        string.digits + string.punctuation
 
 
 def check_entropy():
@@ -66,10 +68,10 @@ def byte_to_char(byte, chars):
     """
 
     # Convert byte to a location in the input character list.
-    index = int(len(chars) * (float(byte) / 255.))
+    index = int((len(chars) - 1) * (float(byte) / 255.))
 
     if index < 0 or index >= len(chars):
-        print minimum, index, maximum
+        print 0, index, len(chars)
         assert False
 
     return chars[index]
@@ -138,16 +140,66 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=formatter_class,
                                      description=textwrap.dedent(man))
 
-    parser.add_argument('--length', metavar='<int>', type=int,
-                        help='length of password')
+    parser.add_argument('--length', metavar='<int>', type=int, default=24,
+                        help='length of password (default=24)')
+
+    msg = "Exclude uppercase letters:  %s" % string.ascii_uppercase
+    parser.add_argument('--upper', action='store_false', default=True,
+                        help=msg)
+
+    msg = "Exclude lowercase letters:  %s" % string.ascii_lowercase
+    parser.add_argument('--lower', action='store_false', default=True,
+                        help=msg)
+
+    msg = "Exclude numeric characters: %s" % string.digits
+    parser.add_argument('--numeric', action='store_false', default=True,
+                        help=msg)
+
+    msg = "Include punctuation characters: %s" % string.punctuation
+    msg = msg.replace('%', '%%')
+    parser.add_argument('--punctuation', action='store_true', default=False,
+                        help=msg)
+
+    msg = "Print characters available for random password generation and exit."
+    parser.add_argument('--list', action='store_true', default=False, help=msg)
 
     # Get arguments from the command-line.
     args = parser.parse_args()
 
     # -------------------------------------------------------------------------
+    #                  Create list of available characters
+    # -------------------------------------------------------------------------
+    characters = ''
+
+    # Include uppercase letters.
+    if args.upper:
+        characters += string.ascii_uppercase
+
+    # Include lowercase letters.
+    if args.lower:
+        characters += string.ascii_lowercase
+
+    # Include numeric characters.
+    if args.numeric:
+        characters += string.digits
+
+    # Include punctuation characters.
+    if args.punctuation:
+        characters += string.punctuation
+
+    # No characters are available. Exit.
+    if not characters:
+        print "Character set is empty. Cannot generate random passwords."
+        sys.exit()
+
+    # Print available characters and exit.
+    if args.list:
+        print characters
+        sys.exit()
+
+    # -------------------------------------------------------------------------
     #                       Generate random password
     # -------------------------------------------------------------------------
-
     msg = """Collecting environmental noise collected from device drivers and other
           sources. It is a good idea to perform some other action (type on the
           keyboard, move the mouse, utilize the disks) during the prime

@@ -159,7 +159,7 @@ def byte_to_char(byte, chars):
     return chars[index]
 
 
-def generate_password(length, pool_reserve=128, characters=CHARS):
+def generate_password(length, pool_reserve=128, characters=CHARS, verbose=True):
     """Generate a random password by drawing bytes from /dev/random.
 
     Args:
@@ -202,12 +202,15 @@ def generate_password(length, pool_reserve=128, characters=CHARS):
             end_time = time.time()
             if end_time - start_time > 1:
                 start_time = end_time
-                sys.stdout.write(msg % (entropy, j))
-                sys.stdout.flush()
+                if verbose:
+                    sys.stdout.write(msg % (entropy, j))
+                    sys.stdout.flush()
             else:
                 time.sleep(0.25)
 
-    sys.stdout.write((msg % (entropy, j))[:-1] + '\n')
+    if verbose:
+        sys.stdout.write((msg % (entropy, j))[:-1] + '\n')
+
     return str(''.join(password))
 
 
@@ -252,6 +255,9 @@ if __name__ == '__main__':
 
     msg = "Print characters available for random password generation and exit."
     parser.add_argument('--list', action='store_true', default=False, help=msg)
+
+    parser.add_argument('--silent', action='store_true', default=False,
+                        help="Surpress output to stdout.")
 
     # Get arguments from the command-line.
     args = parser.parse_args()
@@ -304,17 +310,23 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     #                       Generate random password
     # -------------------------------------------------------------------------
-    msg = """Collecting environmental noise collected from device drivers and other
-          sources. It is a good idea to perform some other action (type on the
-          keyboard, move the mouse, utilize the disks) during the prime
-          generation; this gives the random number generator a better chance to
-          gain enough entropy."""
-
     N = len(characters)
     L = args.length
-    print summary(N, L)
 
-    print textwrap.fill(msg, width=70) + '\n'
+    if not args.silent:
+        print summary(N, L)
 
-    password = generate_password(L, characters=characters)
-    print '\n' + password
+        msg = """Collecting environmental noise collected from device drivers and other
+              sources. It is a good idea to perform some other action (type on the
+              keyboard, move the mouse, utilize the disks) during the prime
+              generation; this gives the random number generator a better chance to
+              gain enough entropy."""
+        print textwrap.fill(msg, width=70) + '\n'
+
+    password = generate_password(L, characters=characters,
+                                 verbose=not args.silent)
+
+    if not args.silent:
+        print
+
+    print password

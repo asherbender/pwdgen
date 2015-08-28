@@ -30,6 +30,8 @@ import argparse
 import textwrap
 import subprocess
 
+# Default password length.
+DEFAULT_LENGTH = 24
 
 # Set of characters available for use in passwords.
 CHARS = string.ascii_uppercase + string.ascii_lowercase + \
@@ -229,8 +231,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=formatter_class,
                                      description=textwrap.dedent(man))
 
-    parser.add_argument('--length', metavar='<int>', type=int, default=24,
-                        help='length of password (default=24)')
+    parser.add_argument('--length', metavar='<int>', type=int,
+                        default=DEFAULT_LENGTH, help='length of password
+                        (default=%i)' % DEFAULT_LENGTH)
 
     msg = "Exclude uppercase letters:  %s" % string.ascii_uppercase
     parser.add_argument('--upper', action='store_false', default=True,

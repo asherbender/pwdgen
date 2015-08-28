@@ -142,11 +142,19 @@ def byte_to_char(byte, chars):
     """
 
     # Convert byte to a location in the input character list.
-    index = int((len(chars) - 1) * (float(byte) / 255.))
+    if byte < 255:
+        index = int(len(chars) * (float(byte) / 255.))
 
-    if index < 0 or index >= len(chars):
-        print 0, index, len(chars)
-        assert False
+    # Note that when byte==255, 'index' will be equal to len(chars). All other
+    # values for 'byte' will be cast to an integer value less than
+    # len(char). To handle this boundary case, return the index of the final
+    # character.
+    elif byte == 255:
+        index = len(chars) - 1
+
+    # Input is not a true byte.
+    elif byte > 255:
+        Exception('Expected a uint8')
 
     return chars[index]
 

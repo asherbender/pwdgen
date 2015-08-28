@@ -216,6 +216,10 @@ def generate_password(length, pool_reserve=128, characters=CHARS, verbose=True):
 
 if __name__ == '__main__':
 
+    # Can only operate on systems with /dev/random.
+    if not os.path.exists('/dev/random'):
+        raise IOError("Could not locate '/dev/random'. Cannot run pwdgen.")
+
     # -------------------------------------------------------------------------
     #         Configure command-line options & parsing behaviour
     # -------------------------------------------------------------------------
